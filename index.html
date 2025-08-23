@@ -1,0 +1,110 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Churn Prediction</title>
+    <style>
+        body {
+            background: linear-gradient(45deg, red, black, purple);
+            animation: gradient 5s ease infinite;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        @keyframes gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .container {
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.5);
+            width: 400px;
+            text-align: center;
+        }
+
+        input[type="file"] {
+            margin-bottom: 10px;
+        }
+
+        button {
+            padding: 10px;
+            background-color: purple;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: darkviolet;
+        }
+
+        canvas {
+            margin-top: 20px;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h2>Upload Customer Data CSV</h2>
+        <input type="file" id="fileInput" accept=".csv">
+        <button onclick="uploadFile()">Predict Churn</button>
+        
+        <canvas id="churnChart" width="400" height="200"></canvas>
+        
+        <div id="results"></div>
+    </div>
+
+    <script>
+        async function uploadFile() {
+            const input = document.getElementById('fileInput');
+            const formData = new FormData();
+            formData.append('file', input.files[0]);
+
+            const response = await fetch('/predict', {
+                method: 'POST',
+                body: formData,
+            });
+
+            const resultDiv = document.getElementById('results');
+            const resultData = await response.json();
+
+            // Display predictions count
+            resultDiv.innerHTML = `<h3>Predictions:</h3><p>Total Customers: ${resultData.total_count}</p><p>Churned Customers: ${resultData.churn_count}</p><p>Not Churned Customers: ${resultData.not_churn_count}</p>`;
+
+            // Create chart for churn prediction results
+            const ctx = document.getElementById('churnChart').getContext('2d');
+            const churnChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Churned', 'Not Churned'],
+                    datasets: [{
+                        label: 'Customer Count',
+                        data: [resultData.churn_count, resultData.not_churn_count],
+                        backgroundColor: ['red', 'green'],
+                    }]
+                },
+                options: {
+                    scales: {
+                        yAxes: [{
+                            ticks: {
+                                beginAtZero:true
+                            }
+                        }]
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
